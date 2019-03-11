@@ -1,0 +1,77 @@
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    camera=new QCamera(this);
+    viewfinder=new QCameraViewfinder(this);
+    imageCapture=new QCameraImageCapture(camera);
+
+    ui->ver111->addWidget(viewfinder);
+    ui->label->setScaledContents(true);
+
+    camera->setViewfinder(viewfinder);
+    camera->start();
+    connect(imageCapture, SIGNAL(imageCaptured(int,QImage)), this, SLOT(displayImage(int,QImage)));
+    connect(ui->capture, SIGNAL(clicked()), this, SLOT(captureImage()));
+    connect(ui->save, SIGNAL(clicked()), this, SLOT(saveImage()));
+    connect(ui->quit, SIGNAL(clicked()), qApp, SLOT(quit()));
+
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+void MainWindow::captureImage()
+{
+ui->statusBar->showMessage(tr("capturing..."), 1000);
+imageCapture->capture();
+}
+
+void MainWindow::displayImage(int , QImage image)
+{
+ui->label->setPixmap(QPixmap::fromImage(image));
+
+ui->statusBar->showMessage(tr("capture OK!"), 5000);
+}
+void MainWindow::saveImage()
+{
+QString fileName=QFileDialog::getSaveFileName(this, tr("save file"), QDir::homePath(), tr("jpegfile(*.jpg)"));
+if(fileName.isEmpty()) {
+ui->statusBar->showMessage(tr("save cancel"), 5000);
+return;
+}
+const QPixmap* pixmap=ui->label->pixmap();
+if(pixmap) {
+pixmap->save(fileName);
+ui->statusBar->showMessage(tr("save OK"), 5000);
+}
+}
+
+void MainWindow::on_capture_clicked()
+{
+
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    QString fileName = QFileDialog::getOpenFileName(this,tr("open image file"), "./", tr("Image files(*.jpg *.png);;All files (*.*)"));
+                                                           //窗口文字               默认目录       筛选后缀
+       widid=this->winId();
+       widid2=widid;
+       ReadImage(&ho_Image, HTuple(fileName.toStdString().c_str()));
+     //  OpenWindow(ui->graphicsView->x(),ui->graphicsView->y(),ui->graphicsView->width(),ui->graphicsView->height(),widid2,"","",&hv_WindowHandle);
+       OpenWindow(0,0,ui->label->width(),ui->label->height(),widid2,"","",&hv_WindowHandle);
+       HDevWindowStack::Push(hv_WindowHandle);
+       if(HDevWindowStack::IsOpen())
+       {
+           DispObj(ho_Image,HDevWindowStack::GetActive());
+           globalMark=1;
+       }
+
+
+}
